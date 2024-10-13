@@ -9,4 +9,4 @@
 </p>
 <p class="text-center">_______________________________________________</p>
 <h3 class="text-center">- Made by&nbsp;<a href="https://electus-studio.itch.io/" target="_blank">Electus Studio</a>&nbsp;-</h3>
-</a>&nbsp;</h3><p></p><h3>&nbsp;<a href="https://electus-studio.itch.io/" target="_blank">Donate</a>&nbsp;</h3>
+</a>&nbsp;</h3><p></p><h3>&nbsp;<a href="https://electus-studio.itch.io/msk/purchase" target="_blank">Donate</a>&nbsp;</h3>
