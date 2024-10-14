@@ -141,10 +141,25 @@ class MusikiApp(QtWidgets.QWidget):
                 }],
             }
             with yt_dlp.YoutubeDL(options) as ydl:
-                ydl.download([search_url]) 
+                ydl.download([search_url])
         except Exception as e:
+            error_msg = QtWidgets.QMessageBox(self)
+            error_msg.setWindowTitle("Hata")
+            error_msg.setText(f"Şu hata oluştu: {str(e)}")
+            error_msg.setStyleSheet("""
+                QMessageBox {
+                    background-color: white;
+                    color: black;
+                    font-size: 14px;
+                }
+                QPushButton {
+                    background-color: #f0f0f0;
+                    border: none;
+                    padding: 5px;
+                }
+            """)
             print(f"Hata: {str(e)}")
-            QtWidgets.QMessageBox.critical(self, "Hata", f"Şu hata oluştu: {str(e)}")
+            error_msg.exec_()
 
 
     def update_library(self):
@@ -161,7 +176,6 @@ class MusikiApp(QtWidgets.QWidget):
             if os.path.exists(song_path):
                 os.remove(song_path)
                 self.update_library() 
-                print(f"{song_name} başarıyla silindi.")
 
 
     def play_song(self):
