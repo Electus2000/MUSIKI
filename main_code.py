@@ -144,8 +144,8 @@ class MusikiApp(QtWidgets.QWidget):
                 ydl.download([search_url])
         except Exception as e:
             error_msg = QtWidgets.QMessageBox(self)
-            error_msg.setWindowTitle("Hata")
-            error_msg.setText(f"Şu hata oluştu: {str(e)}")
+            error_msg.setWindowTitle("Error")
+            error_msg.setText(f"Error: {str(e)}")
             error_msg.setStyleSheet("""
                 QMessageBox {
                     background-color: white;
@@ -158,7 +158,7 @@ class MusikiApp(QtWidgets.QWidget):
                     padding: 5px;
                 }
             """)
-            print(f"Hata: {str(e)}")
+            print(f"Error: {str(e)}")
             error_msg.exec_()
 
 
@@ -176,7 +176,6 @@ class MusikiApp(QtWidgets.QWidget):
             if os.path.exists(song_path):
                 os.remove(song_path)
                 self.update_library() 
-
 
     def play_song(self):
         selected_item = self.library_list.currentItem()
