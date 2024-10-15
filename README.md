@@ -5,7 +5,7 @@
 <p><strong>Download MÛSİKİ now and enjoy the music!</strong></p>
 <p class="text-center">_______________________________________________
 </p>
-<p class="text-justify"><strong>Minimum System Requirements:&nbsp;</strong>2GB of RAM, 250MB of Free Disk Space. Windows7
+<p class="text-justify"><strong>Minimum System Requirements:&nbsp;</strong>2GB of RAM, 250MB (With <a href="https://www.ffmpeg.org/" target="_blank">FFmpeg</a> 900MB)&nbsp;of Free Disk Space. Windows7
 </p>
 <p class="text-center">_______________________________________________</p>
 <h3 class="text-center">- Made by&nbsp;<a href="https://electus-studio.itch.io/" target="_blank">Electus Studio</a>&nbsp;-</h3>
