@@ -11,85 +11,107 @@ class MusikiApp(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MÛSİKİ")
-        self.setGeometry(100, 100, 700, 500)
+        self.setGeometry(100, 100, 900, 500)
+        self.setStyleSheet("background-color: black; color: white; font-family: Arial;")
 
-        self.setStyleSheet("background-color: black;")
+        main_layout = QtWidgets.QGridLayout(self)
+        self.setWindowIcon(QtGui.QIcon('icon.ico'))
 
         title_label = QtWidgets.QLabel("MÛSİKİ", self)
-        title_label.setAlignment(QtCore.Qt.AlignCenter)
+        title_label.setAlignment(QtCore.Qt.AlignRight)
         title_label.setStyleSheet("font-size: 32px; font-weight: bold; color: white;")
-        self.layout = QtWidgets.QVBoxLayout()
-        self.layout.addWidget(title_label)
-        
-        self.setWindowIcon(QtGui.QIcon('icon.ico'))
+        main_layout.addWidget(title_label, 0, 1)
 
         search_layout = QtWidgets.QHBoxLayout()
         self.search_input = QtWidgets.QLineEdit(self)
         self.search_input.setPlaceholderText("Search for song...")
-        self.search_input.setStyleSheet("background-color: #1c1c1c; color: white; border: 1px solid #494949;")  
+        self.search_input.setStyleSheet("background-color: #333; color: white; border-radius: 15px; padding: 10px;")
         search_layout.addWidget(self.search_input)
-
+        
         self.search_button = QtWidgets.QPushButton("Search", self)
-        self.search_button.setStyleSheet("background-color: #1c1c1c; color: white;") 
+        self.search_button.setStyleSheet("background-color: #333; color: white; border-radius: 15px; padding: 10px 20px; height: 15px;")
         self.search_button.clicked.connect(self.search_songs)
         search_layout.addWidget(self.search_button)
+        
+        main_layout.addLayout(search_layout, 0, 0)
 
-        self.layout.addLayout(search_layout)
-
+        results_groupbox = QtWidgets.QGroupBox("Search Results", self)
+        results_groupbox.setStyleSheet("color: white;")
+        results_layout = QtWidgets.QVBoxLayout()
+        
         self.results_list = QtWidgets.QListWidget(self)
-        self.results_list.setStyleSheet("background-color: #1c1c1c; color: white;")  
-        self.layout.addWidget(self.results_list)
+        self.results_list.setStyleSheet("background-color: #1c1c1c; color: white;")
+        results_layout.addWidget(self.results_list)
 
         self.add_button = QtWidgets.QPushButton("Add", self)
-        self.add_button.setStyleSheet("background-color: #1c1c1c; color: white;")  #
+        self.add_button.setStyleSheet("background-color: #333; color: white; border-radius: 10px; padding: 5px;")
         self.add_button.clicked.connect(self.add_song)
-        self.layout.addWidget(self.add_button)
+        results_layout.addWidget(self.add_button)
+        
+        results_groupbox.setLayout(results_layout)
+        results_groupbox.setMinimumWidth(600)  
+        main_layout.addWidget(results_groupbox, 1, 0)
 
+        library_groupbox = QtWidgets.QGroupBox("Library", self)
+        library_groupbox.setStyleSheet("color: white;")
+        library_layout = QtWidgets.QVBoxLayout()
+        
         self.library_list = QtWidgets.QListWidget(self)
-        self.library_list.setStyleSheet("background-color: #1c1c1c; color: white;") 
-        self.layout.addWidget(self.library_list)
-
-        control_layout = QtWidgets.QHBoxLayout()
-        self.play_button = QtWidgets.QPushButton("Play", self)
-        self.play_button.setStyleSheet("background-color: #1c1c1c; color: white;")  
-        self.play_button.clicked.connect(self.play_song)
-        control_layout.addWidget(self.play_button)
-
-        self.stop_button = QtWidgets.QPushButton("Stop", self)
-        self.stop_button.setStyleSheet("background-color: #1c1c1c; color: white;") 
-        self.stop_button.clicked.connect(self.toggle_playback)
-        control_layout.addWidget(self.stop_button)
+        self.library_list.setStyleSheet("background-color: #1c1c1c; color: white;")
+        library_layout.addWidget(self.library_list)
+        
+        main_layout.setColumnStretch(0, 2) 
+        main_layout.setColumnStretch(1, 1)
 
         self.delete_button = QtWidgets.QPushButton("Delete", self)
-        self.delete_button.setStyleSheet("background-color: #1c1c1c; color: white;")  
+        self.delete_button.setStyleSheet("background-color: #333; color: white; border-radius: 10px; padding: 5px;")
         self.delete_button.clicked.connect(self.delete_song)
-        self.layout.addWidget(self.delete_button)
+        library_layout.addWidget(self.delete_button)
+        
+        library_groupbox.setLayout(library_layout)
+        main_layout.addWidget(library_groupbox, 1, 1)
+        
+        music_controls_layout = QtWidgets.QVBoxLayout()
 
-        self.layout.addLayout(control_layout)
+        control_layout = QtWidgets.QHBoxLayout()
+
+        self.play_button = QtWidgets.QPushButton("Play", self)
+        self.play_button.setStyleSheet("font-size: 12px; background-color: #333; border-radius: 15px; padding: 10px;")
+        self.play_button.setFixedSize(70, 35) 
+        self.play_button.clicked.connect(self.play_song)
+
+        control_layout.addStretch(1) 
+        control_layout.addWidget(self.play_button) 
+        control_layout.addStretch(1)
+
+        music_controls_layout.addLayout(control_layout)
 
         self.progress_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
-        self.progress_slider.setRange(0, 100)  
-        self.progress_slider.setStyleSheet("background-color: #1c1c1c; color: white;")
-        self.progress_slider.sliderReleased.connect(self.seek_song)  
-        self.layout.addWidget(self.progress_slider)
+        self.progress_slider.setRange(0, 100)
+        self.progress_slider.setStyleSheet("background-color: #1c1c1c;")
+        self.progress_slider.sliderReleased.connect(self.seek_song)
+        music_controls_layout.addWidget(self.progress_slider)
 
         self.progress_label = QtWidgets.QLabel("00:00 / 00:00", self)
-        self.progress_label.setStyleSheet("color: white;")  
-        self.layout.addWidget(self.progress_label)
-
+        self.progress_label.setStyleSheet("color: white;")
+        music_controls_layout.addWidget(self.progress_label)
 
         self.volume_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
-        self.volume_slider.setRange(0, 100)  
-        self.volume_slider.setValue(50) 
-        self.volume_slider.setStyleSheet("background-color: #1c1c1c; color: white;") 
+        self.volume_slider.setRange(0, 100)
+        self.volume_slider.setValue(50)
+        self.volume_slider.setStyleSheet("background-color: #1c1c1c;")
         self.volume_slider.valueChanged.connect(self.change_volume)
-        self.layout.addWidget(self.volume_slider)
+        music_controls_layout.addWidget(self.volume_slider)
 
-        self.volume_label = QtWidgets.QLabel("Volume: 50%", self)
+        self.volume_label = QtWidgets.QLabel("50%", self)
         self.volume_label.setStyleSheet("color: white;")
-        self.layout.addWidget(self.volume_label)
+        music_controls_layout.addWidget(self.volume_label)
+        
+        self.library_list.itemClicked.connect(self.play_selected_song)
 
-        self.setLayout(self.layout)
+        main_layout.addLayout(music_controls_layout, 2, 0, 1, 2)
+        
+        self.setLayout(main_layout)
 
         if not os.path.exists('music'):
             os.makedirs('music')
@@ -97,11 +119,12 @@ class MusikiApp(QtWidgets.QWidget):
         self.update_library()
 
         pygame.mixer.init()
-        self.is_playing = False  #
-        self.timer = QtCore.QTimer(self) 
+        self.is_playing = False
+        self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_progress)
-        self.current_song_length = 0 
-        self.current_position = 0  
+        self.current_song_length = 0
+        self.current_position = 0
+        pygame.mixer.music.set_volume(50)
 
     def search_songs(self):
         query = self.search_input.text()
@@ -173,40 +196,50 @@ class MusikiApp(QtWidgets.QWidget):
         if selected_item:
             song_name = selected_item.text()
             song_path = os.path.join('music', song_name)
+            
+            
+            pygame.mixer.music.stop() 
+            pygame.quit() 
+            self.is_playing = False  
+
             if os.path.exists(song_path):
                 os.remove(song_path)
-                self.update_library() 
+                self.update_library()
+                
+    def play_selected_song(self):
+        import pygame
+        pygame.mixer.init()
+        selected_item = self.library_list.currentItem()
+        song_name = selected_item.text()
+        song_path = os.path.join('music', song_name)
+        pygame.mixer.music.load(song_path)
+        pygame.mixer.music.play()
+        self.is_playing = True
+        self.timer.start(1000) 
+        self.current_song_length = self.get_song_length(song_path)  
+        self.update_progress_label(0)  
+        self.progress_slider.setRange(0, int(self.current_song_length)) 
+        self.progress_slider.setEnabled(True) 
+        self.play_button.setText("Stop")
+        self.current_position = 0  
 
     def play_song(self):
-        selected_item = self.library_list.currentItem()
-        if selected_item:
-            song_name = selected_item.text()
-            song_path = os.path.join('music', song_name)
-            if os.path.exists(song_path):
-                pygame.mixer.music.load(song_path)
-                pygame.mixer.music.play()
-                self.is_playing = True
-                self.current_song_length = self.get_song_length(song_path)  
-                self.update_progress_label(0)  
-                self.progress_slider.setRange(0, int(self.current_song_length)) 
-                self.progress_slider.setEnabled(True) 
-                self.stop_button.setText("Stop")  
-                self.timer.start(1000) 
-                self.current_position = 0  
-
-    def get_song_length(self, song_path):
-        sound = pygame.mixer.Sound(song_path)  
-        return sound.get_length()
-
-    def toggle_playback(self):
+        import pygame
+        pygame.mixer.init()
         if self.is_playing:
             pygame.mixer.music.pause()
             self.is_playing = False
-            self.stop_button.setText("Continue")
+            self.play_button.setText("Play")
         else:
             pygame.mixer.music.unpause()
             self.is_playing = True
-            self.stop_button.setText("Stop")
+            self.play_button.setText("Stop")
+
+    def get_song_length(self, song_path):
+        import pygame
+        pygame.mixer.init()
+        sound = pygame.mixer.Sound(song_path)  
+        return sound.get_length()
 
     def update_progress(self):
         if self.is_playing:
@@ -228,12 +261,16 @@ class MusikiApp(QtWidgets.QWidget):
         return f"{minutes:02}:{seconds:02}"
 
     def seek_song(self):
+        import pygame
+        pygame.mixer.init()
         seek_time = self.progress_slider.value()
         pygame.mixer.music.play(start=seek_time)
         self.current_position = seek_time
         self.update_progress_label(seek_time)
 
     def change_volume(self):
+        import pygame
+        pygame.mixer.init()
         volume = self.volume_slider.value() / 100  
         pygame.mixer.music.set_volume(volume)
         self.volume_label.setText(f"Volume: {self.volume_slider.value()}%")
