@@ -56,6 +56,11 @@ class MusikiApp(QtWidgets.QWidget):
         library_groupbox.setStyleSheet("color: white;")
         library_layout = QtWidgets.QVBoxLayout()
         
+        self.library_search_input = QtWidgets.QLineEdit(self)
+        self.library_search_input.setPlaceholderText("Search in library...")
+        self.library_search_input.setStyleSheet("background-color: #333; color: white; border-radius: 15px; padding: 10px;")
+        self.library_search_input.textChanged.connect(self.search_library)
+        library_layout.addWidget(self.library_search_input)
         self.library_list = QtWidgets.QListWidget(self)
         self.library_list.setStyleSheet("background-color: #1c1c1c; color: white;")
         library_layout.addWidget(self.library_list)
@@ -103,7 +108,7 @@ class MusikiApp(QtWidgets.QWidget):
         self.volume_slider.valueChanged.connect(self.change_volume)
         music_controls_layout.addWidget(self.volume_slider)
 
-        self.volume_label = QtWidgets.QLabel("50%", self)
+        self.volume_label = QtWidgets.QLabel(f"Volume: {self.volume_slider.value()}%", self)
         self.volume_label.setStyleSheet("color: white;")
         music_controls_layout.addWidget(self.volume_label)
         
@@ -183,6 +188,13 @@ class MusikiApp(QtWidgets.QWidget):
             """)
             print(f"Error: {str(e)}")
             error_msg.exec_()
+            
+    def search_library(self):
+        search_term = self.library_search_input.text().lower()
+        self.library_list.clear()
+        for filename in os.listdir('music'):
+            if filename.endswith('.mp3') and search_term in filename.lower():
+                self.library_list.addItem(filename)
 
 
     def update_library(self):
@@ -247,7 +259,7 @@ class MusikiApp(QtWidgets.QWidget):
             self.progress_slider.setValue(self.current_position)
             self.update_progress_label(self.current_position)
             if self.current_position >= self.current_song_length:
-                self.timer.stop() 
+                self.current_position -= 1
 
     def update_progress_label(self, current_time):
         total_time = self.current_song_length
