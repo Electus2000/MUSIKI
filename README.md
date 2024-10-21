@@ -25,10 +25,11 @@ Download MÛSİKİ now and enjoy the music!
 ## Contributors
 
 - **Electus Studio:** The team behind the development of MÛSİKİ.
+- **Jaime Osvaldo:** The person who helped me learn how to use Github.
 
 ## License
 
-MÛSİKİ is provided under an open-source license. For more information, please refer to the [license file](LICENSE).
+MÛSİKİ is provided under an open-source license. For more information, please refer to the [license file](LICENSE.txt).
 
 ## Support Us
 
