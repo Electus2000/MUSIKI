@@ -2,7 +2,9 @@ import os
 import sys
 import yt_dlp
 import pygame
+import requests
 from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtGui import QPixmap, QIcon
 from googleapiclient.discovery import build
 
 API_KEY = 'API' 
@@ -138,10 +140,22 @@ class MusikiApp(QtWidgets.QWidget):
         response = request.execute()
 
         self.results_list.clear()
+        
         for item in response['items']:
             title = item['snippet']['title']
             video_id = item['id']['videoId']
-            self.results_list.addItem(f"{title}  /  https://www.youtube.com/watch?v={video_id}")
+            thumbnail_url = item['snippet']['thumbnails']['default']['url'] 
+            
+            list_item =QtWidgets.QListWidgetItem(f"{title}  /  https://www.youtube.com/watch?v={video_id}")
+            
+            thumbnail_data = requests.get(thumbnail_url).content
+            pixmap = QPixmap()
+            pixmap.loadFromData(thumbnail_data)
+            
+            icon = QIcon(pixmap)
+            list_item.setIcon(icon)
+            
+            self.results_list.addItem(list_item)
 
     def add_song(self):
         selected_item = self.results_list.currentItem()
@@ -196,7 +210,6 @@ class MusikiApp(QtWidgets.QWidget):
             if filename.endswith('.mp3') and search_term in filename.lower():
                 self.library_list.addItem(filename)
 
-
     def update_library(self):
         self.library_list.clear()
         for filename in os.listdir('music'):
@@ -209,6 +222,7 @@ class MusikiApp(QtWidgets.QWidget):
             song_name = selected_item.text()
             song_path = os.path.join('music', song_name)
             
+            print(f"Deleted : {song_name}")
             
             pygame.mixer.music.stop() 
             pygame.quit() 
@@ -234,6 +248,7 @@ class MusikiApp(QtWidgets.QWidget):
         self.progress_slider.setEnabled(True) 
         self.play_button.setText("Stop")
         self.current_position = 0  
+        print(f"Playing : {song_name}")
 
     def play_song(self):
         import pygame
@@ -242,10 +257,12 @@ class MusikiApp(QtWidgets.QWidget):
             pygame.mixer.music.pause()
             self.is_playing = False
             self.play_button.setText("Play")
+            print("Stopped")
         else:
             pygame.mixer.music.unpause()
             self.is_playing = True
             self.play_button.setText("Stop")
+            print("Playing")
 
     def get_song_length(self, song_path):
         import pygame
@@ -275,6 +292,8 @@ class MusikiApp(QtWidgets.QWidget):
     def seek_song(self):
         import pygame
         pygame.mixer.init()
+        self.is_playing = True
+        self.play_button.setText("Stop")
         seek_time = self.progress_slider.value()
         pygame.mixer.music.play(start=seek_time)
         self.current_position = seek_time
