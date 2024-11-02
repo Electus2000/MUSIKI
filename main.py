@@ -7,13 +7,13 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import QPixmap, QIcon
 from googleapiclient.discovery import build
 
-API_KEY = 'API' 
+API_KEY = 'API'
 
 class MusikiApp(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MÛSİKİ")
-        self.setGeometry(100, 100, 900, 500)
+        self.setGeometry(100, 100, 1000, 600)
         self.setStyleSheet("background-color: black; color: white; font-family: Arial;")
 
         main_layout = QtWidgets.QGridLayout(self)
@@ -21,17 +21,17 @@ class MusikiApp(QtWidgets.QWidget):
 
         title_label = QtWidgets.QLabel("MÛSİKİ", self)
         title_label.setAlignment(QtCore.Qt.AlignRight)
-        title_label.setStyleSheet("font-size: 32px; font-weight: bold; color: white;")
+        title_label.setStyleSheet("font-size: 34px; font-weight: bold; color: white;")
         main_layout.addWidget(title_label, 0, 1)
 
         search_layout = QtWidgets.QHBoxLayout()
         self.search_input = QtWidgets.QLineEdit(self)
         self.search_input.setPlaceholderText("Search for song...")
-        self.search_input.setStyleSheet("background-color: #333; color: white; border-radius: 15px; padding: 10px;")
+        self.search_input.setStyleSheet("font-size: 13px; background-color: #333; color: white; border-radius: 15px; padding: 10px;")
         search_layout.addWidget(self.search_input)
         
         self.search_button = QtWidgets.QPushButton("Search", self)
-        self.search_button.setStyleSheet("background-color: #333; color: white; border-radius: 15px; padding: 10px 20px; height: 15px;")
+        self.search_button.setStyleSheet("font-size: 12px; background-color: #333; color: white; border-radius: 15px; padding: 10px 20px; height: 15px;")
         self.search_button.clicked.connect(self.search_songs)
         search_layout.addWidget(self.search_button)
         
@@ -42,11 +42,11 @@ class MusikiApp(QtWidgets.QWidget):
         results_layout = QtWidgets.QVBoxLayout()
         
         self.results_list = QtWidgets.QListWidget(self)
-        self.results_list.setStyleSheet("background-color: #1c1c1c; color: white;")
+        self.results_list.setStyleSheet("font-size: 13px; background-color: #1c1c1c; color: white;")
         results_layout.addWidget(self.results_list)
 
         self.add_button = QtWidgets.QPushButton("Add", self)
-        self.add_button.setStyleSheet("background-color: #333; color: white; border-radius: 10px; padding: 5px;")
+        self.add_button.setStyleSheet("font-size: 12px; background-color: #333; color: white; border-radius: 10px; padding: 5px;")
         self.add_button.clicked.connect(self.add_song)
         results_layout.addWidget(self.add_button)
         
@@ -60,18 +60,18 @@ class MusikiApp(QtWidgets.QWidget):
         
         self.library_search_input = QtWidgets.QLineEdit(self)
         self.library_search_input.setPlaceholderText("Search in library...")
-        self.library_search_input.setStyleSheet("background-color: #333; color: white; border-radius: 15px; padding: 10px;")
+        self.library_search_input.setStyleSheet("font-size: 13px; background-color: #333; color: white; border-radius: 15px; padding: 10px;")
         self.library_search_input.textChanged.connect(self.search_library)
         library_layout.addWidget(self.library_search_input)
         self.library_list = QtWidgets.QListWidget(self)
-        self.library_list.setStyleSheet("background-color: #1c1c1c; color: white;")
+        self.library_list.setStyleSheet("font-size: 12px; background-color: #1c1c1c; color: white;")
         library_layout.addWidget(self.library_list)
         
         main_layout.setColumnStretch(0, 2) 
         main_layout.setColumnStretch(1, 1)
 
         self.delete_button = QtWidgets.QPushButton("Delete", self)
-        self.delete_button.setStyleSheet("background-color: #333; color: white; border-radius: 10px; padding: 5px;")
+        self.delete_button.setStyleSheet("font-size: 12px; background-color: #333; color: white; border-radius: 10px; padding: 5px;")
         self.delete_button.clicked.connect(self.delete_song)
         library_layout.addWidget(self.delete_button)
         
@@ -100,7 +100,7 @@ class MusikiApp(QtWidgets.QWidget):
         music_controls_layout.addWidget(self.progress_slider)
 
         self.progress_label = QtWidgets.QLabel("00:00 / 00:00", self)
-        self.progress_label.setStyleSheet("color: white;")
+        self.progress_label.setStyleSheet("font-size: 12px; color: white;")
         music_controls_layout.addWidget(self.progress_label)
 
         self.volume_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
@@ -111,7 +111,7 @@ class MusikiApp(QtWidgets.QWidget):
         music_controls_layout.addWidget(self.volume_slider)
 
         self.volume_label = QtWidgets.QLabel(f"Volume: {self.volume_slider.value()}%", self)
-        self.volume_label.setStyleSheet("color: white;")
+        self.volume_label.setStyleSheet("font-size: 12px; color: white;")
         music_controls_layout.addWidget(self.volume_label)
         
         self.library_list.itemClicked.connect(self.play_selected_song)
@@ -136,7 +136,7 @@ class MusikiApp(QtWidgets.QWidget):
     def search_songs(self):
         query = self.search_input.text()
         youtube = build('youtube', 'v3', developerKey=API_KEY)
-        request = youtube.search().list(q=query, part='snippet', type='video', maxResults=10)
+        request = youtube.search().list(q=query, part='snippet', type='video', maxResults=20)
         response = request.execute()
 
         self.results_list.clear()
@@ -146,7 +146,7 @@ class MusikiApp(QtWidgets.QWidget):
             video_id = item['id']['videoId']
             thumbnail_url = item['snippet']['thumbnails']['default']['url'] 
             
-            list_item =QtWidgets.QListWidgetItem(f"{title}  /  https://www.youtube.com/watch?v={video_id}")
+            list_item =QtWidgets.QListWidgetItem(f"{title}  /  [https://www.youtube.com/watch?v={video_id}]")
             
             thumbnail_data = requests.get(thumbnail_url).content
             pixmap = QPixmap()
@@ -154,6 +154,8 @@ class MusikiApp(QtWidgets.QWidget):
             
             icon = QIcon(pixmap)
             list_item.setIcon(icon)
+            
+            list_item.setSizeHint(QtCore.QSize(0, 30))
             
             self.results_list.addItem(list_item)
 
@@ -167,7 +169,6 @@ class MusikiApp(QtWidgets.QWidget):
             self.setWindowTitle("MÛSİKİ") 
             self.library_list.clear()  
             self.update_library()  
-
 
     def download_song(self, url):
         try:
@@ -211,6 +212,8 @@ class MusikiApp(QtWidgets.QWidget):
                 self.library_list.addItem(filename)
 
     def update_library(self):
+        import pygame
+        pygame.mixer.init()
         self.library_list.clear()
         for filename in os.listdir('music'):
             if filename.endswith('.mp3'):
@@ -226,7 +229,8 @@ class MusikiApp(QtWidgets.QWidget):
             
             pygame.mixer.music.stop() 
             pygame.quit() 
-            self.is_playing = False  
+            self.is_playing = False 
+            self.play_button.setText("Play") 
 
             if os.path.exists(song_path):
                 os.remove(song_path)
