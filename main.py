@@ -1,6 +1,7 @@
 import os
 import sys
 import yt_dlp
+import shutil
 import pygame
 import requests
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -58,6 +59,8 @@ class MusikiApp(QtWidgets.QWidget):
         library_groupbox.setStyleSheet("color: white;")
         library_layout = QtWidgets.QVBoxLayout()
         
+        self.current_directory = os.path.join(os.getcwd(), 'music')
+        
         self.library_search_input = QtWidgets.QLineEdit(self)
         self.library_search_input.setPlaceholderText("Search in library...")
         self.library_search_input.setStyleSheet("font-size: 13px; background-color: #333; color: white; border-radius: 15px; padding: 10px;")
@@ -69,6 +72,11 @@ class MusikiApp(QtWidgets.QWidget):
         
         main_layout.setColumnStretch(0, 2) 
         main_layout.setColumnStretch(1, 1)
+        
+        self.add_playlist_button = QtWidgets.QPushButton("Create Playlist", self)
+        self.add_playlist_button.setStyleSheet("font-size: 12px; background-color: #333; color: white; border-radius: 10px; padding: 5px;")
+        library_layout.addWidget(self.add_playlist_button)
+        self.add_playlist_button.clicked.connect(self.add_playlist)
 
         self.delete_button = QtWidgets.QPushButton("Delete", self)
         self.delete_button.setStyleSheet("font-size: 12px; background-color: #333; color: white; border-radius: 10px; padding: 5px;")
@@ -81,15 +89,32 @@ class MusikiApp(QtWidgets.QWidget):
         music_controls_layout = QtWidgets.QVBoxLayout()
 
         control_layout = QtWidgets.QHBoxLayout()
+        
+        self.song_title_label = QtWidgets.QLabel("Currently Playing: None  ", self)
+        self.song_title_label.setStyleSheet("font-size: 16px; color: white;")
+        control_layout.addWidget(self.song_title_label)
 
         self.play_button = QtWidgets.QPushButton("Play", self)
         self.play_button.setStyleSheet("font-size: 12px; background-color: #333; border-radius: 15px; padding: 10px;")
         self.play_button.setFixedSize(70, 35) 
         self.play_button.clicked.connect(self.play_song)
+        
+        self.loop_button = QtWidgets.QPushButton("Loop: False", self)
+        self.loop_button.setStyleSheet("font-size: 12px; background-color: #333; border-radius: 15px; padding: 10px;")
+        self.loop_button.setFixedSize(100, 35) 
+        self.loop_button.clicked.connect(self.loop)
+        
+        self.next_button = QtWidgets.QPushButton("Play next: False", self)
+        self.next_button.setStyleSheet("font-size: 12px; background-color: #333; border-radius: 15px; padding: 10px;")
+        self.next_button.setFixedSize(120, 35) 
+        self.next_button.clicked.connect(self.next)
 
-        control_layout.addStretch(1) 
         control_layout.addWidget(self.play_button) 
         control_layout.addStretch(1)
+        control_layout.addWidget(self.next_button)
+        control_layout.addWidget(self.loop_button)
+        
+        music_controls_layout.addLayout(control_layout)
 
         music_controls_layout.addLayout(control_layout)
 
@@ -127,11 +152,45 @@ class MusikiApp(QtWidgets.QWidget):
 
         pygame.mixer.init()
         self.is_playing = False
+        self.loop_mode = False
+        self.next_mode = False
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_progress)
         self.current_song_length = 0
         self.current_position = 0
         pygame.mixer.music.set_volume(50)
+        self.library_list.itemDoubleClicked.connect(self.on_library_item_double_clicked)
+        
+    def loop(self):
+        if self.loop_mode:
+            self.loop_mode = False
+            self.loop_button.setText("Loop: False")
+        else:
+            self.loop_mode = True
+            self.loop_button.setText("Loop: True")
+            
+    def next(self):
+        if self.next_mode:
+            self.next_mode = False
+            self.next_button.setText("Play next: False")
+        else:
+            self.next_mode = True
+            self.next_button.setText("Play next: True")
+            
+    def add_playlist(self):
+        folder_name, ok = QtWidgets.QInputDialog.getText(self, "New Playlist", "Playlist name:")
+        
+        if ok and folder_name:
+            folder_name_with_tag = f"{folder_name} [Playlist]"
+            new_folder_path = os.path.join('music', folder_name_with_tag)
+
+            if not os.path.exists(new_folder_path):
+                os.makedirs(new_folder_path)
+                
+                self.update_library()
+            else:
+                QtWidgets.QMessageBox.warning(self, "Error", f"'{folder_name}' playlist is already available.")
+                print(f"{folder_name}' playlist is already available.")
 
     def search_songs(self):
         query = self.search_input.text()
@@ -173,10 +232,11 @@ class MusikiApp(QtWidgets.QWidget):
     def download_song(self, url):
         try:
             search_url = f"ytsearch:{url}"
+            output_directory = os.path.join(self.current_directory, '%(title)s.%(ext)s')
             options = {
                 'format': 'bestaudio/best',
                 'extractaudio': True,
-                'outtmpl': 'music/%(title)s.%(ext)s',
+                'outtmpl':  output_directory,
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
@@ -212,47 +272,80 @@ class MusikiApp(QtWidgets.QWidget):
                 self.library_list.addItem(filename)
 
     def update_library(self):
-        import pygame
-        pygame.mixer.init()
         self.library_list.clear()
-        for filename in os.listdir('music'):
-            if filename.endswith('.mp3'):
-                self.library_list.addItem(filename)
+        
+        if self.current_directory != os.path.join(os.getcwd(), 'music'):
+            self.library_list.addItem("...")
+
+        for item in os.listdir(self.current_directory):
+            item_path = os.path.join(self.current_directory, item)
+            if os.path.isdir(item_path) or item.endswith('.mp3'):
+                self.library_list.addItem(item)
+                
+    def on_library_item_double_clicked(self, item):
+        if item.text() == "...":
+            self.current_directory = os.path.dirname(self.current_directory)
+        else:
+            selected_path = os.path.join(self.current_directory, item.text())
+            if os.path.isdir(selected_path):
+                self.current_directory = selected_path
+            elif selected_path.endswith('.mp3'):
+
+                self.play_music(selected_path)
+
+        self.update_library()
 
     def delete_song(self):
         selected_item = self.library_list.currentItem()
         if selected_item:
             song_name = selected_item.text()
             song_path = os.path.join('music', song_name)
-            
-            print(f"Deleted : {song_name}")
-            
-            pygame.mixer.music.stop() 
-            pygame.quit() 
-            self.is_playing = False 
-            self.play_button.setText("Play") 
 
-            if os.path.exists(song_path):
-                os.remove(song_path)
-                self.update_library()
+            print(f"Deleting: {song_name}")
+            
+            pygame.quit()
+            self.is_playing = False
+            self.play_button.setText("Play")
+
+            if os.path.isfile(song_path):
+                if os.path.exists(song_path):
+                    os.remove(song_path)
+                    self.song_title_label.setText("Currently Playing: None  ")
+                    print(f"Deleted file: {song_name}")
+                    
+            elif os.path.isdir(song_path):
+                if os.path.exists(song_path):
+                    shutil.rmtree(song_path)
+                    print(f"Deleted folder: {song_name}")
+
+            self.update_library()
                 
     def play_selected_song(self):
-        import pygame
-        pygame.mixer.init()
         selected_item = self.library_list.currentItem()
+        if not selected_item:
+            return
+
         song_name = selected_item.text()
-        song_path = os.path.join('music', song_name)
-        pygame.mixer.music.load(song_path)
-        pygame.mixer.music.play()
-        self.is_playing = True
-        self.timer.start(1000) 
-        self.current_song_length = self.get_song_length(song_path)  
-        self.update_progress_label(0)  
-        self.progress_slider.setRange(0, int(self.current_song_length)) 
-        self.progress_slider.setEnabled(True) 
-        self.play_button.setText("Stop")
-        self.current_position = 0  
-        print(f"Playing : {song_name}")
+        song_path = os.path.join(self.current_directory, song_name)
+        
+        if os.path.isfile(song_path) and song_path.endswith('.mp3'):
+            try:
+                import pygame
+                pygame.mixer.init()
+                pygame.mixer.music.load(song_path)
+                pygame.mixer.music.play()
+                self.is_playing = True
+                self.timer.start(1000)
+                self.current_song_length = self.get_song_length(song_path)
+                self.update_progress_label(0)
+                self.progress_slider.setRange(0, int(self.current_song_length))
+                self.progress_slider.setEnabled(True)
+                self.play_button.setText("Stop")
+                self.current_position = 0
+                self.song_title_label.setText(f"Currently Playing: {song_name}   ")
+                print(f"Playing : {song_name}")
+            except pygame.error as e:
+                print(f"Pygame Error: {e}")
 
     def play_song(self):
         import pygame
@@ -279,8 +372,59 @@ class MusikiApp(QtWidgets.QWidget):
             self.current_position += 1
             self.progress_slider.setValue(self.current_position)
             self.update_progress_label(self.current_position)
+
             if self.current_position >= self.current_song_length:
-                self.current_position -= 1
+                self.current_position -= 1 
+                
+                if not self.loop_mode and self.next_mode:
+                    self.play_next_song()
+
+                if self.loop_mode:
+                    self.play_current_song()
+
+    def play_next_song(self):
+        selected_item = self.library_list.currentItem()
+        song_name = selected_item.text()
+        current_directory = self.current_directory
+        song_list = os.listdir(current_directory)
+        song_list = [f for f in song_list if f.endswith('.mp3')]  
+
+        current_index = song_list.index(song_name)
+        
+        if current_index + 1 < len(song_list):
+            next_song_name = song_list[current_index + 1]
+        else:
+            next_song_name = song_list[0]
+
+        song_path = os.path.join(current_directory, next_song_name)
+        pygame.mixer.music.load(song_path)
+        pygame.mixer.music.play()
+
+        self.is_playing = True
+        self.play_button.setText("Stop")
+        self.current_song_length = self.get_song_length(song_path)
+        self.update_progress_label(0)
+        self.progress_slider.setRange(0, int(self.current_song_length))
+        self.progress_slider.setEnabled(True)
+        self.current_position = 0
+        
+        self.song_title_label.setText(f"Currently Playing: {next_song_name}   ")
+
+    def play_current_song(self):
+        selected_item = self.library_list.currentItem()
+        song_name = selected_item.text()
+        song_path = os.path.join(self.current_directory, song_name)
+        
+        pygame.mixer.music.load(song_path)
+        pygame.mixer.music.play()
+        
+        self.is_playing = True
+        self.play_button.setText("Stop")
+        self.current_song_length = self.get_song_length(song_path)
+        self.update_progress_label(0)
+        self.progress_slider.setRange(0, int(self.current_song_length))
+        self.progress_slider.setEnabled(True)
+        self.current_position = 0
 
     def update_progress_label(self, current_time):
         total_time = self.current_song_length
