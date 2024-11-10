@@ -25,7 +25,7 @@ Explore our extensive music library and discover a variety of genres, ensuring a
 
 Download MÛSİKİ now and enjoy the music!
 
-[Download MÛSİKİ 1.3.1](https://electus-studio.itch.io/msk)
+[Download MÛSİKİ 1.5](https://electus-studio.itch.io/msk)
 
 ## Contributors
 
