@@ -19,13 +19,13 @@ Explore our extensive music library and discover a variety of genres, ensuring a
 
 - **Operating System:** Windows 7
 - **RAM:** Minimum 2GB
-- **Disk Space:** 250MB (900MB with [FFmpeg](https://www.ffmpeg.org/))
+- **Disk Space:** 250MB (600MB with [FFmpeg](https://www.ffmpeg.org/))
 
 ## Download
 
 Download MÛSİKİ now and enjoy the music!
 
-[Download MÛSİKİ 1.5](https://electus-studio.itch.io/msk)
+[Download MÛSİKİ 1.5.1](https://electus-studio.itch.io/msk)
 
 ## Contributors
 
