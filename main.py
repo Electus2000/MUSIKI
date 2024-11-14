@@ -7,6 +7,7 @@ import requests
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import QPixmap, QIcon
 from googleapiclient.discovery import build
+import keyboard
 
 API_KEY = 'API'
 
@@ -32,7 +33,7 @@ class MusikiApp(QtWidgets.QWidget):
         search_layout.addWidget(self.search_input)
         
         self.search_button = QtWidgets.QPushButton("Search", self)
-        self.search_button.setStyleSheet("font-size: 12px; background-color: #333; color: white; border-radius: 15px; padding: 10px 20px; height: 15px;")
+        self.search_button.setStyleSheet("font-size: 12px; background-color: #333; color: white; border-radius: 15px; padding: 10px 20px; height: 17px;")
         self.search_button.clicked.connect(self.search_songs)
         search_layout.addWidget(self.search_button)
         
@@ -98,6 +99,20 @@ class MusikiApp(QtWidgets.QWidget):
         self.play_button.setStyleSheet("font-size: 12px; background-color: #333; border-radius: 15px; padding: 10px;")
         self.play_button.setFixedSize(70, 35) 
         self.play_button.clicked.connect(self.play_song)
+        keyboard.add_hotkey("F7", self.play_song)
+        
+        self.playnext_button = QtWidgets.QPushButton(">", self)
+        self.playnext_button.setStyleSheet("font-size: 14px; background-color: #333; border-radius: 15px; padding: 10px;")
+        self.playnext_button.setFixedSize(40, 35) 
+        self.playnext_button.clicked.connect(self.nextsong)
+        keyboard.add_hotkey("F6", self.nextsong)
+        
+        self.playback_button = QtWidgets.QPushButton("<", self)
+        self.playback_button.setStyleSheet("font-size: 14px; background-color: #333; border-radius: 15px; padding: 10px;")
+        self.playback_button.setFixedSize(40, 35) 
+        self.playback_button.clicked.connect(self.backsong)
+        keyboard.add_hotkey("F5", self.backsong)
+
         
         self.loop_button = QtWidgets.QPushButton("Loop: False", self)
         self.loop_button.setStyleSheet("font-size: 12px; background-color: #333; border-radius: 15px; padding: 10px;")
@@ -109,7 +124,9 @@ class MusikiApp(QtWidgets.QWidget):
         self.next_button.setFixedSize(120, 35) 
         self.next_button.clicked.connect(self.next)
 
+        control_layout.addWidget(self.playback_button)
         control_layout.addWidget(self.play_button) 
+        control_layout.addWidget(self.playnext_button)
         control_layout.addStretch(1)
         control_layout.addWidget(self.next_button)
         control_layout.addWidget(self.loop_button)
@@ -147,7 +164,9 @@ class MusikiApp(QtWidgets.QWidget):
 
         if not os.path.exists('music'):
             os.makedirs('music')
-
+            
+            
+        os.system('cls')
         self.update_library()
         pygame.mixer.init()
         self.is_playing = False
@@ -159,22 +178,121 @@ class MusikiApp(QtWidgets.QWidget):
         self.current_position = 0
         pygame.mixer.music.set_volume(50)
         self.library_list.itemDoubleClicked.connect(self.on_library_item_double_clicked)
+        self.fetch_trending_songs()
+        
+    def fetch_trending_songs(self):
+        try:
+            youtube = build('youtube', 'v3', developerKey=API_KEY)
+            request = youtube.videos().list(part="snippet", chart="mostPopular", regionCode="US", maxResults=20)
+            response = request.execute()
+            self.results_list.clear()
+
+            for item in response['items']:
+                title = item['snippet']['title']
+                video_id = item['id']
+                thumbnail_url = item['snippet']['thumbnails']['default']['url']
+                
+                list_item = QtWidgets.QListWidgetItem(f"{title}  /  [https://www.youtube.com/watch?v={video_id}]")
+                
+                # Set thumbnail as icon
+                thumbnail_data = requests.get(thumbnail_url).content
+                pixmap = QPixmap()
+                pixmap.loadFromData(thumbnail_data)
+                icon = QIcon(pixmap)
+                list_item.setIcon(icon)
+                
+                list_item.setSizeHint(QtCore.QSize(0, 30))
+                
+                self.results_list.addItem(list_item)
+        
+        except Exception as e:
+            print(f"Error fetching trending songs: {e}")
+        
+    def nextsong(self):
+        selected_item = self.library_list.currentItem()
+        song_name = selected_item.text() if selected_item else None
+        current_directory = self.current_directory
+        song_list = os.listdir(current_directory)
+        song_list = [f for f in song_list if f.endswith('.mp3')]
+
+        current_index = song_list.index(song_name) if song_name in song_list else -1
+        
+        if current_index != -1 and current_index + 1 < len(song_list):
+            next_song_name = song_list[current_index + 1]
+        else:
+            next_song_name = song_list[0]  
+
+        items = self.library_list.findItems(next_song_name, QtCore.Qt.MatchExactly)
+        if items:
+            self.library_list.setCurrentItem(items[0])  
+            
+        song_path = os.path.join(current_directory, next_song_name)
+        pygame.mixer.music.load(song_path)
+        pygame.mixer.music.play()
+
+        self.is_playing = True
+        self.play_button.setText("Stop")
+        self.current_song_length = self.get_song_length(song_path)
+        self.update_progress_label(0)
+        self.progress_slider.setRange(0, int(self.current_song_length))
+        self.progress_slider.setEnabled(True)
+        self.current_position = 0
+        
+        print(f"Playing : {next_song_name}")
+        self.song_title_label.setText(f"Currently Playing: {next_song_name}   ")
+        
+    def backsong(self):
+        selected_item = self.library_list.currentItem()
+        song_name = selected_item.text() if selected_item else None
+        current_directory = self.current_directory
+        song_list = os.listdir(current_directory)
+        song_list = [f for f in song_list if f.endswith('.mp3')]
+
+        current_index = song_list.index(song_name) if song_name in song_list else -1
+        
+        if current_index != -1 and current_index - 1 < len(song_list):
+            next_song_name = song_list[current_index - 1]
+        else:
+            next_song_name = song_list[0]  
+
+        items = self.library_list.findItems(next_song_name, QtCore.Qt.MatchExactly)
+        if items:
+            self.library_list.setCurrentItem(items[0])  
+            
+        song_path = os.path.join(current_directory, next_song_name)
+        pygame.mixer.music.load(song_path)
+        pygame.mixer.music.play()
+
+        self.is_playing = True
+        self.play_button.setText("Stop")
+        self.current_song_length = self.get_song_length(song_path)
+        self.update_progress_label(0)
+        self.progress_slider.setRange(0, int(self.current_song_length))
+        self.progress_slider.setEnabled(True)
+        self.current_position = 0
+        
+        print(f"Playing : {next_song_name}")
+        self.song_title_label.setText(f"Currently Playing: {next_song_name}   ")
         
     def loop(self):
         if self.loop_mode:
             self.loop_mode = False
             self.loop_button.setText("Loop: False")
+            print("False")
         else:
             self.loop_mode = True
             self.loop_button.setText("Loop: True")
+            print("True")
             
     def next(self):
         if self.next_mode:
             self.next_mode = False
             self.next_button.setText("Play next: False")
+            print("False")
         else:
             self.next_mode = True
             self.next_button.setText("Play next: True")
+            print("True")
             
     def add_playlist(self):
         folder_name, ok = QtWidgets.QInputDialog.getText(self, "New Playlist", "Playlist name:")
@@ -221,7 +339,7 @@ class MusikiApp(QtWidgets.QWidget):
         selected_item = self.results_list.currentItem()
         if selected_item:
             video_url = selected_item.text().split("  /  ")[1].strip()
-            self.setWindowTitle("MÛSİKİ (Song is Downloading, Do Not Close the Application)")  
+            self.setWindowTitle("MÛSİKİ [Downloading song, don't close the app]")  
             self.download_song(video_url)
             self.update_library() 
             self.setWindowTitle("MÛSİKİ") 
@@ -416,6 +534,7 @@ class MusikiApp(QtWidgets.QWidget):
         self.progress_slider.setEnabled(True)
         self.current_position = 0
         
+        print(f"Playing : {next_song_name}")
         self.song_title_label.setText(f"Currently Playing: {next_song_name}   ")
 
     def play_current_song(self):
