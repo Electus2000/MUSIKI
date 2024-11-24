@@ -7,7 +7,7 @@ MÛSİKİ is a completely free, ad-free, and open-source application designed to
 Explore our extensive music library and discover a variety of genres, ensuring a seamless listening experience. MÛSİKİ offers the perfect software for those who want to enjoy music.
 
 
-![Screenshot](https://img.itch.zone/aW1hZ2UvMzAzNDE0Ni8xODcwOTc0NC5wbmc=/original/hKpZIu.png)
+![Screenshot](https://img.itch.zone/aW1hZ2UvMzAzNDE0Ni8xODcwOTg2Mi5wbmc=/original/gRgMVc.png)
 
 ## Features
 
