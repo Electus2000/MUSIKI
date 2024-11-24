@@ -6,8 +6,12 @@ import pygame
 import requests
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtGui import QIcon, QPixmap
+from mutagen.mp3 import MP3
+from mutagen.id3 import ID3, APIC
 from googleapiclient.discovery import build
 import keyboard
+
 
 API_KEY = 'API'
 
@@ -15,11 +19,11 @@ class MusikiApp(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MÛSİKİ")
-        self.setGeometry(100, 100, 1000, 600)
+        self.setGeometry(100, 100, 1000, 700)
         self.setStyleSheet("background-color: black; color: white; font-family: Arial;")
 
         main_layout = QtWidgets.QGridLayout(self)
-        self.setWindowIcon(QtGui.QIcon('icon.ico'))
+        self.setWindowIcon(QtGui.QIcon('resources/icon.ico'))
 
         title_label = QtWidgets.QLabel("MÛSİKİ", self)
         title_label.setAlignment(QtCore.Qt.AlignRight)
@@ -31,6 +35,7 @@ class MusikiApp(QtWidgets.QWidget):
         self.search_input.setPlaceholderText("Search for song...")
         self.search_input.setStyleSheet("font-size: 13px; background-color: #333; color: white; border-radius: 15px; padding: 10px;")
         search_layout.addWidget(self.search_input)
+        self.search_input.returnPressed.connect(self.search_songs)
         
         self.search_button = QtWidgets.QPushButton("Search", self)
         self.search_button.setStyleSheet("font-size: 12px; background-color: #333; color: white; border-radius: 15px; padding: 10px 20px; height: 17px;")
@@ -91,7 +96,11 @@ class MusikiApp(QtWidgets.QWidget):
 
         control_layout = QtWidgets.QHBoxLayout()
         
-        self.song_title_label = QtWidgets.QLabel("Currently Playing: None   ", self)
+        self.cover_label = QtWidgets.QLabel(self)
+        self.cover_label.setFixedSize(80, 80)
+        self.cover_label.setStyleSheet("background-color: #333;")
+        
+        self.song_title_label = QtWidgets.QLabel("  Currently Playing: None   ", self)
         self.song_title_label.setStyleSheet("font-size: 16px; color: white;")
         control_layout.addWidget(self.song_title_label)
 
@@ -99,19 +108,19 @@ class MusikiApp(QtWidgets.QWidget):
         self.play_button.setStyleSheet("font-size: 12px; background-color: #333; border-radius: 15px; padding: 10px;")
         self.play_button.setFixedSize(70, 35) 
         self.play_button.clicked.connect(self.play_song)
-        keyboard.add_hotkey("F7", self.play_song)
+        keyboard.add_hotkey("ctrl+space", self.play_song)
         
-        self.playnext_button = QtWidgets.QPushButton(">", self)
+        self.playnext_button = QtWidgets.QPushButton(">I", self)
         self.playnext_button.setStyleSheet("font-size: 14px; background-color: #333; border-radius: 15px; padding: 10px;")
         self.playnext_button.setFixedSize(40, 35) 
         self.playnext_button.clicked.connect(self.nextsong)
-        keyboard.add_hotkey("F6", self.nextsong)
+        keyboard.add_hotkey("ctrl+right", self.nextsong)
         
-        self.playback_button = QtWidgets.QPushButton("<", self)
+        self.playback_button = QtWidgets.QPushButton("I<", self)
         self.playback_button.setStyleSheet("font-size: 14px; background-color: #333; border-radius: 15px; padding: 10px;")
         self.playback_button.setFixedSize(40, 35) 
         self.playback_button.clicked.connect(self.backsong)
-        keyboard.add_hotkey("F5", self.backsong)
+        keyboard.add_hotkey("ctrl+left", self.backsong)
 
         
         self.loop_button = QtWidgets.QPushButton("Loop: False", self)
@@ -123,7 +132,12 @@ class MusikiApp(QtWidgets.QWidget):
         self.next_button.setStyleSheet("font-size: 12px; background-color: #333; border-radius: 15px; padding: 10px;")
         self.next_button.setFixedSize(120, 35) 
         self.next_button.clicked.connect(self.next)
-
+        
+        cover_layout = QtWidgets.QHBoxLayout()
+        cover_layout.addWidget(self.cover_label)
+        
+        control_layout.insertLayout(0, cover_layout)
+        
         control_layout.addWidget(self.playback_button)
         control_layout.addWidget(self.play_button) 
         control_layout.addWidget(self.playnext_button)
@@ -176,14 +190,14 @@ class MusikiApp(QtWidgets.QWidget):
         self.timer.timeout.connect(self.update_progress)
         self.current_song_length = 0
         self.current_position = 0
-        pygame.mixer.music.set_volume(50)
+        pygame.mixer.music.set_volume(0.5)
         self.library_list.itemDoubleClicked.connect(self.on_library_item_double_clicked)
         self.fetch_trending_songs()
         
     def fetch_trending_songs(self):
         try:
             youtube = build('youtube', 'v3', developerKey=API_KEY)
-            request = youtube.videos().list(part="snippet", chart="mostPopular", regionCode="US", maxResults=20)
+            request = youtube.videos().list(part="snippet", chart="mostPopular", regionCode="US", maxResults=20, videoCategoryId="10")
             response = request.execute()
             self.results_list.clear()
 
@@ -194,7 +208,6 @@ class MusikiApp(QtWidgets.QWidget):
                 
                 list_item = QtWidgets.QListWidgetItem(f"{title}  /  [https://www.youtube.com/watch?v={video_id}]")
                 
-                # Set thumbnail as icon
                 thumbnail_data = requests.get(thumbnail_url).content
                 pixmap = QPixmap()
                 pixmap.loadFromData(thumbnail_data)
@@ -238,8 +251,14 @@ class MusikiApp(QtWidgets.QWidget):
         self.progress_slider.setEnabled(True)
         self.current_position = 0
         
+        cover_path = os.path.splitext(song_path)[0] + '.jpg'
+        if os.path.isfile(cover_path):
+            self.cover_label.setPixmap(QPixmap(cover_path).scaled(80, 80))
+        else:
+            self.cover_label.setPixmap(QPixmap("resources/no-cover.jpg").scaled(80, 80))
+        
         print(f"Playing : {next_song_name}")
-        self.song_title_label.setText(f"Currently Playing: {next_song_name}   ")
+        self.song_title_label.setText(f"  Currently Playing: {next_song_name}   ")
         
     def backsong(self):
         selected_item = self.library_list.currentItem()
@@ -271,8 +290,14 @@ class MusikiApp(QtWidgets.QWidget):
         self.progress_slider.setEnabled(True)
         self.current_position = 0
         
+        cover_path = os.path.splitext(song_path)[0] + '.jpg'
+        if os.path.isfile(cover_path):
+            self.cover_label.setPixmap(QPixmap(cover_path).scaled(80, 80))
+        else:
+            self.cover_label.setPixmap(QPixmap("resources/no-cover.jpg").scaled(80, 80))
+        
         print(f"Playing : {next_song_name}")
-        self.song_title_label.setText(f"Currently Playing: {next_song_name}   ")
+        self.song_title_label.setText(f"  Currently Playing: {next_song_name}   ")
         
     def loop(self):
         if self.loop_mode:
@@ -312,7 +337,7 @@ class MusikiApp(QtWidgets.QWidget):
     def search_songs(self):
         query = self.search_input.text()
         youtube = build('youtube', 'v3', developerKey=API_KEY)
-        request = youtube.search().list(q=query, part='snippet', type='video', maxResults=20)
+        request = youtube.search().list(q=query, part='snippet', type='video', maxResults=20, videoCategoryId="10")
         response = request.execute()
 
         self.results_list.clear()
@@ -350,15 +375,24 @@ class MusikiApp(QtWidgets.QWidget):
         try:
             search_url = f"ytsearch:{url}"
             output_directory = os.path.join(self.current_directory, '%(title)s.%(ext)s')
+            thumbnail_directory = os.path.join(self.current_directory, '%(title)s_thumbnail.%(ext)s')
             options = {
                 'format': 'bestaudio/best',
                 'extractaudio': True,
-                'outtmpl':  output_directory,
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '192',
-                }],
+                'outtmpl': output_directory,
+                'postprocessors': [
+                    {
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '192',
+                    },
+                    {
+                        'key': 'EmbedThumbnail',
+                        'already_have_thumbnail': False,
+                    },
+                ],
+                'writethumbnail': True,
+                'outtmpl_thumbnail': thumbnail_directory, 
             }
             with yt_dlp.YoutubeDL(options) as ydl:
                 ydl.download([search_url])
@@ -381,6 +415,7 @@ class MusikiApp(QtWidgets.QWidget):
             print(f"Error: {str(e)}")
             error_msg.exec_()
             
+            
     def search_library(self):
         search_term = self.library_search_input.text().lower()
         self.library_list.clear()
@@ -389,21 +424,56 @@ class MusikiApp(QtWidgets.QWidget):
             file_path = os.path.join('music', filename)
 
             if filename.lower().endswith('.mp3') and search_term in filename.lower():
-                self.library_list.addItem(filename)
+                list_item = QtWidgets.QListWidgetItem(filename)
+
+                cover_path = self.extract_cover(file_path) 
+                if cover_path:
+                    icon = QIcon(cover_path)  
+                else:
+                    icon = QIcon('resources/icon.ico')  
+
+                list_item.setIcon(icon) 
+                self.library_list.addItem(list_item)
+
             elif os.path.isdir(file_path) and search_term in filename.lower():
                 self.library_list.addItem(f"{filename}")
 
+
     def update_library(self):
         self.library_list.clear()
-        
+
         if self.current_directory != os.path.join(os.getcwd(), 'music'):
             self.library_list.addItem("..")
 
         for item in os.listdir(self.current_directory):
             item_path = os.path.join(self.current_directory, item)
+
             if os.path.isdir(item_path) or item.endswith('.mp3'):
-                self.library_list.addItem(item)
+                list_item = QtWidgets.QListWidgetItem(item)
                 
+                if item.endswith('.mp3'):
+                    cover_path = self.extract_cover(item_path)
+                    if cover_path:
+                        icon = QIcon(cover_path)
+                    else:
+                        icon = QIcon('resources/icon.ico') 
+                    list_item.setIcon(icon)
+
+                self.library_list.addItem(list_item)
+
+    def extract_cover(self, mp3_path):
+        cover_path = os.path.splitext(mp3_path)[0] + ".jpg"
+        try:
+            audio = MP3(mp3_path, ID3=ID3)
+            for tag in audio.tags.values():
+                if isinstance(tag, APIC): 
+                    with open(cover_path, 'wb') as img:
+                        img.write(tag.data)
+                    return cover_path
+        except Exception as e:
+            print(f"Error: {e}")
+        return None
+
     def on_library_item_double_clicked(self, item):
         if item.text() == "..":
             self.current_directory = os.path.dirname(self.current_directory)
@@ -412,10 +482,10 @@ class MusikiApp(QtWidgets.QWidget):
             if os.path.isdir(selected_path):
                 self.current_directory = selected_path
             elif selected_path.endswith('.mp3'):
-
                 self.play_music(selected_path)
-
+                
         self.update_library()
+
 
     def delete_song(self):
         selected_item = self.library_list.currentItem()
@@ -432,7 +502,7 @@ class MusikiApp(QtWidgets.QWidget):
             if os.path.isfile(song_path):
                 if os.path.exists(song_path):
                     os.remove(song_path)
-                    self.song_title_label.setText("Currently Playing: None   ")
+                    self.song_title_label.setText("  Currently Playing: None   ")
                     print(f"Deleted file: {song_name}")
                     
             elif os.path.isdir(song_path):
@@ -449,7 +519,9 @@ class MusikiApp(QtWidgets.QWidget):
 
         song_name = selected_item.text()
         song_path = os.path.join(self.current_directory, song_name)
-        
+
+        cover_path = os.path.join(self.current_directory, song_name.replace('.mp3', '.jpg'))
+
         if os.path.isfile(song_path) and song_path.endswith('.mp3'):
             try:
                 import pygame
@@ -464,10 +536,17 @@ class MusikiApp(QtWidgets.QWidget):
                 self.progress_slider.setEnabled(True)
                 self.play_button.setText("Stop")
                 self.current_position = 0
-                self.song_title_label.setText(f"Currently Playing: {song_name}   ")
+                self.song_title_label.setText(f"  Currently Playing: {song_name}   ")
+
+                if os.path.isfile(cover_path):
+                    self.cover_label.setPixmap(QPixmap(cover_path).scaled(80, 80))
+                else:
+                    self.cover_label.setPixmap(QPixmap("resources/no-cover.jpg").scaled(80, 80))
+
                 print(f"Playing : {song_name}")
             except pygame.error as e:
-                print(f"Pygame Error: {e}")
+                print(f"Error: {e}")
+
 
     def play_song(self):
         import pygame
@@ -534,8 +613,14 @@ class MusikiApp(QtWidgets.QWidget):
         self.progress_slider.setEnabled(True)
         self.current_position = 0
         
+        cover_path = os.path.splitext(song_path)[0] + '.jpg'
+        if os.path.isfile(cover_path):
+            self.cover_label.setPixmap(QPixmap(cover_path).scaled(80, 80))
+        else:
+            self.cover_label.setPixmap(QPixmap("resources/no-cover.jpg").scaled(80, 80))
+        
         print(f"Playing : {next_song_name}")
-        self.song_title_label.setText(f"Currently Playing: {next_song_name}   ")
+        self.song_title_label.setText(f"  Currently Playing: {next_song_name}   ")
 
     def play_current_song(self):
         selected_item = self.library_list.currentItem()
