@@ -6,12 +6,10 @@ import pygame
 import requests
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtGui import QIcon, QPixmap
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, APIC
 from googleapiclient.discovery import build
 import keyboard
-
 
 API_KEY = 'API'
 
@@ -19,7 +17,7 @@ class MusikiApp(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MÛSİKİ")
-        self.setGeometry(100, 100, 1000, 700)
+        self.setGeometry(100, 100, 1050, 650)
         self.setStyleSheet("background-color: black; color: white; font-family: Arial;")
 
         main_layout = QtWidgets.QGridLayout(self)
@@ -121,7 +119,6 @@ class MusikiApp(QtWidgets.QWidget):
         self.playback_button.setFixedSize(40, 35) 
         self.playback_button.clicked.connect(self.backsong)
         keyboard.add_hotkey("ctrl+left", self.backsong)
-
         
         self.loop_button = QtWidgets.QPushButton("Loop: False", self)
         self.loop_button.setStyleSheet("font-size: 12px; background-color: #333; border-radius: 15px; padding: 10px;")
@@ -179,8 +176,8 @@ class MusikiApp(QtWidgets.QWidget):
         if not os.path.exists('music'):
             os.makedirs('music')
             
-            
         os.system('cls')
+        print("Enjoy the music.")
         self.update_library()
         pygame.mixer.init()
         self.is_playing = False
@@ -193,6 +190,7 @@ class MusikiApp(QtWidgets.QWidget):
         pygame.mixer.music.set_volume(0.5)
         self.library_list.itemDoubleClicked.connect(self.on_library_item_double_clicked)
         self.fetch_trending_songs()
+        self.cover_label.setPixmap(QPixmap("resources/no-cover.jpg").scaled(80, 80))
         
     def fetch_trending_songs(self):
         try:
@@ -372,6 +370,10 @@ class MusikiApp(QtWidgets.QWidget):
             self.update_library()  
 
     def download_song(self, url):
+        pygame.mixer.music.pause()
+        self.is_playing = False
+        self.play_button.setText("Play")
+        print("Stopped")
         try:
             search_url = f"ytsearch:{url}"
             output_directory = os.path.join(self.current_directory, '%(title)s.%(ext)s')
@@ -396,13 +398,17 @@ class MusikiApp(QtWidgets.QWidget):
             }
             with yt_dlp.YoutubeDL(options) as ydl:
                 ydl.download([search_url])
+                pygame.mixer.music.unpause()
+                self.is_playing = True
+                self.play_button.setText("Stop")
+                print("Playing")
         except Exception as e:
             error_msg = QtWidgets.QMessageBox(self)
             error_msg.setWindowTitle("Error")
             error_msg.setText(f"Error: {str(e)}")
             error_msg.setStyleSheet("""
                 QMessageBox {
-                    background-color: white;
+                    background-color: black;
                     color: black;
                     font-size: 14px;
                 }
@@ -413,8 +419,11 @@ class MusikiApp(QtWidgets.QWidget):
                 }
             """)
             print(f"Error: {str(e)}")
+            pygame.mixer.music.unpause()
+            self.is_playing = True
+            self.play_button.setText("Stop")
+            print("Playing")
             error_msg.exec_()
-            
             
     def search_library(self):
         search_term = self.library_search_input.text().lower()
@@ -486,7 +495,6 @@ class MusikiApp(QtWidgets.QWidget):
                 
         self.update_library()
 
-
     def delete_song(self):
         selected_item = self.library_list.currentItem()
         if selected_item:
@@ -494,15 +502,15 @@ class MusikiApp(QtWidgets.QWidget):
             song_path = os.path.join('music', song_name)
 
             print(f"Deleting: {song_name}")
-            
-            pygame.quit()
-            self.is_playing = False
-            self.play_button.setText("Play")
 
             if os.path.isfile(song_path):
                 if os.path.exists(song_path):
+                    pygame.quit()
                     os.remove(song_path)
                     self.song_title_label.setText("  Currently Playing: None   ")
+                    self.cover_label.setPixmap(QPixmap("resources/no-cover.jpg").scaled(80, 80))
+                    self.is_playing = False
+                    self.play_button.setText("Play")
                     print(f"Deleted file: {song_name}")
                     
             elif os.path.isdir(song_path):
@@ -528,6 +536,8 @@ class MusikiApp(QtWidgets.QWidget):
                 pygame.mixer.init()
                 pygame.mixer.music.load(song_path)
                 pygame.mixer.music.play()
+                volume = self.volume_slider.value() / 100  
+                pygame.mixer.music.set_volume(volume)
                 self.is_playing = True
                 self.timer.start(1000)
                 self.current_song_length = self.get_song_length(song_path)
@@ -551,6 +561,8 @@ class MusikiApp(QtWidgets.QWidget):
     def play_song(self):
         import pygame
         pygame.mixer.init()
+        volume = self.volume_slider.value() / 100  
+        pygame.mixer.music.set_volume(volume)
         if self.is_playing:
             pygame.mixer.music.pause()
             self.is_playing = False
