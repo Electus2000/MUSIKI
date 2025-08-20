@@ -29,7 +29,7 @@ Download MÛSİKİ now and enjoy the music!
 
 ## Contributors
 
-- **Electus Studio:** The team behind the development of MÛSİKİ.
+- **Electus Progressive Liberation Software:** The team behind the development of MÛSİKİ.
 - **Jaime Osvaldo:** The person who helped me learn how to use Github.
 
 ## License
