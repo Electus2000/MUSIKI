@@ -1,6 +1,6 @@
-ELECTUS PROGRESSIVE LIBERATION SOFTWARE LICENSE (1.0)
+ELECTUS PROGRESSIVE LIBERATION SOFTWARE LICENSE (1.1)
 
-Copyright © [2025] [Electus Progressive Liberation Software]
+Copyright © [2025-2026] [Electus Progressive Liberation Software]
 
 This is progressive liberation software, released for free use by individuals and organizations that operate according to egalitarian and cooperative principles.
 
@@ -11,14 +11,12 @@ The above copyright notice and this permission notice shall be included in all c
 
 Permitted Users
 The Software may be used only by:
-a. An individual working independently for their own benefit.
-b. A non-profit organization.
-c. An educational institution.
-d. A cooperative or collective organization where:
-
-    - All members are co-owners,
-    - All members have equal decision-making power, and
-    - All members share profits equally or democratically set compensation.
+a. Independent individuals.
+b. Registered non-profit organizations (per applicable local law).
+c. Non-profit educational institutions.
+d. Cooperatives or collectives that satisfy:
+   - Legal recognition as a cooperative OR
+   - Documented internal governance guaranteeing equal ownership and decision-making.
 
 Prohibited Users and Uses
 The Software may not be used by:
